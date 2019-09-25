@@ -9,6 +9,7 @@ class packet(models.Model):
     email = models.CharField('e-mail', max_length=255)
     token = models.CharField('token', max_length=255)
     date = models.DateField('Дата')
+    Way = models.FloatField('Путь')
     objects = models.Manager()
     class Meta:
         unique_together = ('login', 'password',)
