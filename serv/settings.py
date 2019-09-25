@@ -26,7 +26,11 @@ SECRET_KEY = '&iw*j)#b)hrsjjk762lq0u!#%56rju81tt)+y(p$7a*2@m4ys+'
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    '*'
+    '25.68.224.139',
+    '127.0.0.1',
+    '192.168.1.68',
+    '109.252.28.118',
+    '10.133.165.147'
 ]
 
 
@@ -126,8 +130,17 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR,'staticfiles')
 
+# Heroku: Update database configuration from $DATABASE_URL.
 import dj_database_url
-db_from_env =dj_database_url.config()
+db_from_env = dj_database_url.config(conn_max_age=500)
 DATABASES['default'].update(db_from_env)
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/1.10/howto/static-files/
+
+# The absolute path to the directory where collectstatic will collect static files for deployment.
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# The URL to use when referring to static files (where they will be served from)
+STATIC_URL = '/static/'
