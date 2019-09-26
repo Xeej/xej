@@ -22,6 +22,7 @@ class gps(models.Model):
     packet = models.ForeignKey(packet, on_delete= models.CASCADE)
     longitude = models.FloatField('Долгота')
     latitude = models.FloatField('Широта')
+    alt = models.FloatField('Высота')
+    time = models.FloatField('Время трекинга')
 
-    def __str__(self):
-        return self.gps_text
+
