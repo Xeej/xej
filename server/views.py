@@ -24,9 +24,9 @@ def login(request):
          a.token=token
          a.Way = 0
          a.save()
-         b = gps.objects.filter(packet=a)
+         b = gps.objects.get(packet=a)
          b.latitude =0
-         b.longitude =0
+         b.longitude =255
          b.time =0
          b.alt =0
          b.save()
@@ -62,7 +62,7 @@ def register(request):
             b=gps()
             b.packet = a
             b.latitude = 0
-            b.longitude =0
+            b.longitude =255
             b.time = 0
             b.alt = 0
             b.save()
@@ -73,26 +73,51 @@ def GPS(request):
     if request.method == 'GET':
         token =request.GET.get('token')
         if packet.objects.filter(token=token).exists():
-           a=packet.objects.filter(token=token)
-           b= gps.objects.filter(packet=a)
-           if b.alt !=0:
+           a=packet.objects.get(token=token)
+           b= gps.objects.get(packet=a)
+           if b.longitude !=255:
 
-               long = request.GET.get('longitude')
-               lat = request.GET.get('latitude')
-               alt=request.GET.get('alt')
+               long = float(request.GET.get('longitude'))
+               lat = float(request.GET.get('latitude'))
+               alt=float(request.GET.get('alt'))
 
-               x1 = alt * math.cos(lat) * math.sin(long)
-               y1 = alt * math.sin(lat)
-               z1 = alt * math.cos(lat) * math.cos(long)
+               llat1 = float(request.GET.get('latitude'))
+               llong1 = float(request.GET.get('longitude'))
 
-               x2 = alt * math.cos(request.GET.get('latitude')) * math.sin(request.GET.get('longitude'))
-               y2 = alt * math.sin(request.GET.get('latitude'))
-               z2 = alt * math.cos(request.GET.get('latitude')) * math.cos(request.GET.get('longitude'))
+               llat2 = b.latitude
+               llong2 = b.longitude
 
-               dist = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2 + (z2 - z1) ** 2)
+               # pi - число pi, rad - радиус сферы (Земли)
+               rad = 6372795
 
-               a.Way+=dist
+               # координаты двух точек
+               # в радианах
+               lat1 = llat1 * math.pi / 180.
+               lat2 = llat2 * math.pi / 180.
+               long1 = llong1 * math.pi / 180.
+               long2 = llong2 * math.pi / 180.
 
+               # косинусы и синусы широт и разницы долгот
+               cl1 = math.cos(lat1)
+               cl2 = math.cos(lat2)
+               sl1 = math.sin(lat1)
+               sl2 = math.sin(lat2)
+               delta = long2 - long1
+               cdelta = math.cos(delta)
+               sdelta = math.sin(delta)
+
+               # вычисления длины большого круга
+               y = math.sqrt(math.pow(cl2 * sdelta, 2) + math.pow(cl1 * sl2 - sl1 * cl2 * cdelta, 2))
+               x = sl1 * sl2 + cl1 * cl2 * cdelta
+               ad = math.atan2(y, x)
+               dist = ad * rad
+
+               d=a.Way
+               a.Way=d+dist
+
+               b.longitude=long
+               b.latitude=lat
+               b.alt=alt
                b.time = request.GET.get('time')
                b.save()
                a.save()
@@ -101,8 +126,9 @@ def GPS(request):
                b.longitude = request.GET.get('longitude')
                b.latitude = request.GET.get('latitude')
                b.time = request.GET.get('time')
+               b.alt=request.GET.get('alt')
                b.save()
-               return JsonResponse({'way':'0'})
+               return JsonResponse({'way':'zero'})
         else:
             return JsonResponse({'token':'BAD_AUTH'})
     else:
